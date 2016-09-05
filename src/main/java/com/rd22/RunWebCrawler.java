@@ -52,7 +52,8 @@ public class RunWebCrawler
 			//get all the elements with table tag, check if the year is as specified, if so get href with "/thread"
 			Elements elements = doc.select("table");
 			for (Element e : elements) {
-				if(e.attr("class").equals("year") && e.select("tr").get(0).text().contains(String.valueOf(year))){
+				if("year".equals(e.attr("class")) && e.select("tr").get(0).text().contains(String.valueOf(year))){
+				//if(e.attr("class").equals("year") && e.select("tr").get(0).text().contains(String.valueOf(year))){
 					Elements links = e.select("a[href]");
 					for (Element el : links) {
 						if(el.attr("href").endsWith("/thread")){
