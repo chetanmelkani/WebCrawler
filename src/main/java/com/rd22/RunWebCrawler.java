@@ -1,5 +1,7 @@
 package com.rd22;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,6 +37,7 @@ public class RunWebCrawler
 	//Store the URLs of web pages for each month for the specified year
 	private final static Set<URL> urlMonths = new HashSet<>();
 	private final static int MAX_CONSUMER_THREADS = 3;
+	private final static int MAX_MONTHS_DATA_THREADS = 3;
 
 	public static void main( String[] args )
 	{
@@ -48,32 +51,44 @@ public class RunWebCrawler
 
 		//initially fetch the months URL for the specified year and insert it in a set
 		try{
-			Document doc = Jsoup.connect(siteURL).get();
-
-			//get all the elements with table tag, check if the year is as specified, if so get href with "/thread"
-			Elements elements = doc.select("table");
-			for (Element e : elements) {
-				if("year".equals(e.attr("class")) && e.select("tr").get(0).text().contains(String.valueOf(year))){
-				//if(e.attr("class").equals("year") && e.select("tr").get(0).text().contains(String.valueOf(year))){
-					Elements links = e.select("a[href]");
-					for (Element el : links) {
-						if(el.attr("href").endsWith("/thread")){
-							URL monthURL = new URL(siteURL + el.attr("href"));
-							urlMonths.add(monthURL);
-						}
-					}
-				}
-			}
+			parseURL(siteURL, year);
 
 			//start different threads and pass them URls from this list
 			//these threads will create 4 threads, 1 to read URls and the others to download the data
 			//when the data download is complete, the data is written to a file
 
-			processDataMonthWise(urlMonths, 3);
+			processDataMonthWise(urlMonths, MAX_MONTHS_DATA_THREADS);
 
 		}
 		catch(Exception e){
 			LOGGER.error("An exception was raised" + e);
+		}
+	}
+
+	/**
+	 * Parses the URL to fetch and store the 12 months URL in urlMonths set
+	 * @param siteURL
+	 * @param year
+	 * @throws IOException
+	 * @throws MalformedURLException
+	 */
+	private static void parseURL(String siteURL, int year) throws IOException,
+			MalformedURLException {
+		Document doc = Jsoup.connect(siteURL).get();
+
+		//get all the elements with table tag, check if the year is as specified, if so get href with "/thread"
+		Elements elements = doc.select("table");
+		for (Element e : elements) {
+			if("year".equals(e.attr("class")) && e.select("tr").get(0).text().contains(String.valueOf(year))){
+			//if(e.attr("class").equals("year") && e.select("tr").get(0).text().contains(String.valueOf(year))){
+				Elements links = e.select("a[href]");
+				for (Element el : links) {
+					if(el.attr("href").endsWith("/thread")){
+						URL monthURL = new URL(siteURL + el.attr("href"));
+						urlMonths.add(monthURL);
+					}
+				}
+			}
 		}
 	}
 
