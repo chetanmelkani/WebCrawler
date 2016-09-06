@@ -65,7 +65,7 @@ public class RunWebCrawler
 			}
 
 			//start different threads and pass them URls from this list
-			//these threads will create 2 threads, 1 to read URls and the other to download the data
+			//these threads will create 4 threads, 1 to read URls and the others to download the data
 			//when the data download is complete, the data is written to a file
 
 			processDataMonthWise(urlMonths);
