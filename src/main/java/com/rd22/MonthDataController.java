@@ -32,14 +32,17 @@ public class MonthDataController implements Callable<Boolean>{
 	private BlockingQueue<String> queue;
 	private String url;
 	private String month;
+	private int maxConsumerThreads;
+	//variable to keep tab on which thread is processing
 	private volatile static AtomicInteger atomicCount = new AtomicInteger(0);
 	
 	//object to let the consumer know that no more data is coming
 	public static final String DONE = new String("END OF PRODUCTION");
 	
-	public MonthDataController(String url, String month){
+	public MonthDataController(String url, String month, int maxConsumerThreads){
 		this.month = month;
 		this.url = url;
+		this.maxConsumerThreads = maxConsumerThreads;
 	}
 
 	/**
@@ -48,19 +51,19 @@ public class MonthDataController implements Callable<Boolean>{
 	 */
 	@Override
 	public Boolean call() throws Exception {
-		int count = atomicCount.incrementAndGet();	//to store which thread is processed currently
+		int count = atomicCount.incrementAndGet();
 		LOGGER.info("Starting at call in MonthDataController for thread " + count);
 		
 		queue = new LinkedBlockingQueue<>();
 		List<Future<List<Mail>>> listFuture = new LinkedList<Future<List<Mail>>>();
 
-		ExecutorService executor = Executors.newFixedThreadPool(4);
+		ExecutorService executor = Executors.newFixedThreadPool(maxConsumerThreads + 1);
 		//start the producer thread
-		Crawler crawl = new Crawler(queue, url, count);
+		Crawler crawl = new Crawler(queue, url, count, maxConsumerThreads);
 		executor.submit(crawl);
 		
 		//start 3 consumer threads, this number can be fine tuned based on best performance results
-		for(int i=0; i<3; i++){
+		for(int i=0; i<maxConsumerThreads; i++){
 			CreateMailList createMailList = new CreateMailList(queue, count);
 			Future<List<Mail>> future = executor.submit(createMailList);
 			listFuture.add(future);

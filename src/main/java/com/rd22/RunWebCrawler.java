@@ -34,6 +34,7 @@ public class RunWebCrawler
 	private final static Logger LOGGER = Logger.getLogger(RunWebCrawler.class);
 	//Store the URLs of web pages for each month for the specified year
 	private final static Set<URL> urlMonths = new HashSet<>();
+	private final static int MAX_CONSUMER_THREADS = 3;
 
 	public static void main( String[] args )
 	{
@@ -68,7 +69,7 @@ public class RunWebCrawler
 			//these threads will create 4 threads, 1 to read URls and the others to download the data
 			//when the data download is complete, the data is written to a file
 
-			processDataMonthWise(urlMonths);
+			processDataMonthWise(urlMonths, 3);
 
 		}
 		catch(Exception e){
@@ -83,9 +84,9 @@ public class RunWebCrawler
 	 * 
 	 * @param urls
 	 */
-	private static void processDataMonthWise(Set<URL> urls){
+	private static void processDataMonthWise(Set<URL> urls, int maxThreads){
 
-		ExecutorService executor = Executors.newFixedThreadPool(3);
+		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
 		List<Future<Boolean>> futureList = new ArrayList<>();
 
 		for (URL url : urls) {
@@ -93,7 +94,7 @@ public class RunWebCrawler
 			String[] arr = monthDataURL.split("/");
 
 			//This controller will further span new threads, it accepts the months URL and a value to create the filename, which will hold the months data
-			MonthDataController controller = new MonthDataController(monthDataURL, arr[arr.length -2]);
+			MonthDataController controller = new MonthDataController(monthDataURL, arr[arr.length -2], MAX_CONSUMER_THREADS);
 			Future<Boolean> future = executor.submit(controller);
 			futureList.add(future);
 		}

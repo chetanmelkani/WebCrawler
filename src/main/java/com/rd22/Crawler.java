@@ -21,10 +21,13 @@ public class Crawler implements Callable<Boolean>{
 	private BlockingQueue<String> queue;
 	private String url;
 	private int count;
-	public Crawler(BlockingQueue<String> queue, String url, int count){
+	private int maxConsumerThreads;
+	
+	public Crawler(BlockingQueue<String> queue, String url, int count, int maxConsumerThreads){
 		this.queue = queue;
 		this.url = url;
 		this.count = count;
+		this.maxConsumerThreads = maxConsumerThreads;
 	}
 
 	@Override
@@ -51,10 +54,11 @@ public class Crawler implements Callable<Boolean>{
 				}
 			}
 
-			//POISON PILL being inserted in the queue, this could be made dynamic by passing the amount of threads started at controller 
-			queue.put(MonthDataController.DONE);
-			queue.put(MonthDataController.DONE);
-			queue.put(MonthDataController.DONE);
+			//POISON PILL being inserted in the queue
+			for(int i = 0; i< maxConsumerThreads; i++){
+				queue.put(MonthDataController.DONE);
+			}
+			
 			LOGGER.info("Queue completed in Thread-" + count);
 		}
 		catch(InterruptedException e){
