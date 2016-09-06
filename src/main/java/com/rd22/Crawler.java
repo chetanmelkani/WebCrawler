@@ -1,5 +1,7 @@
 package com.rd22;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
@@ -32,27 +34,9 @@ public class Crawler implements Callable<Boolean>{
 
 	@Override
 	public Boolean call() throws Exception {
-		Document doc = Jsoup.connect(this.url).get();
 
 		try{
-			//get all the elements with table tag
-			Elements elements = doc.select("table");
-			for (Element e : elements) {
-				if(e.attr("id").equals("msglist")){
-					Elements trElements = e.select("tr");
-					for (Element trElement : trElements) {
-						Elements hrefElements = trElement.select("a[href]");
-						for (Element hrefElement : hrefElements) {
-							if(hrefElement.parent().attr("class").equals("subject")){
-
-								String s = this.url.substring(0, this.url.length() - 7) + "/ajax/" 
-										+ java.net.URLDecoder.decode(hrefElement.attr("href"), "UTF-8").replace(" ", "+");
-								queue.put(s);
-							}
-						}
-					}
-				}
-			}
+			parseMailURLs();
 
 			//POISON PILL being inserted in the queue
 			for(int i = 0; i< maxConsumerThreads; i++){
@@ -65,6 +49,35 @@ public class Crawler implements Callable<Boolean>{
 			LOGGER.error("InterruptedException " + e);
 		}
 		return true;
+	}
+
+	/**
+	 * Get the individual URL's of mails
+	 * @throws IOException
+	 * @throws UnsupportedEncodingException
+	 * @throws InterruptedException
+	 */
+	private void parseMailURLs() throws IOException,
+			UnsupportedEncodingException, InterruptedException {
+		Document doc = Jsoup.connect(this.url).get();
+		//get all the elements with table tag
+		Elements elements = doc.select("table");
+		for (Element e : elements) {
+			if(e.attr("id").equals("msglist")){
+				Elements trElements = e.select("tr");
+				for (Element trElement : trElements) {
+					Elements hrefElements = trElement.select("a[href]");
+					for (Element hrefElement : hrefElements) {
+						if(hrefElement.parent().attr("class").equals("subject")){
+
+							String s = this.url.substring(0, this.url.length() - 7) + "/ajax/" 
+									+ java.net.URLDecoder.decode(hrefElement.attr("href"), "UTF-8").replace(" ", "+");
+							queue.put(s);
+						}
+					}
+				}
+			}
+		}
 	}
 	
 }
