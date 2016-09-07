@@ -19,7 +19,8 @@ The Mails objects are kept on writing to the file untill all the CreateMailList 
 Once all the Cunsumers threads have returned, the executer is shutdown.
 
 Limitations:
+
 1. If an exception is thrown while connecting to a URL or parsing some data, it is simply ignored and the incomplete data is saved in the file.
- 
+
 2. If a months has multiple pages for the mails, the crawler picks data from the first page only and ignore the others.
 
